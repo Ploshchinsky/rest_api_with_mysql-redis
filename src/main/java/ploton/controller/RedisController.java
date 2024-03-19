@@ -1,6 +1,5 @@
 package ploton.controller;
 
-import org.springframework.beans.factory.annotation.Value;
 import ploton.main.model.Note;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -15,6 +14,7 @@ public class RedisController {
     private static JedisPool jedisPool = new JedisPool(redisHost, redisPort);
     private static JsonObjectMapper jsonObjectMapper = new DefaultGsonObjectMapper();
 
+    //Create
     public static void saveInCache(Note note) {
         try (Jedis redis = jedisPool.getResource()) {
             String jsonFromNote = jsonObjectMapper.toJson(note);
@@ -24,6 +24,23 @@ public class RedisController {
                 redis.rpush(KEY_NAME_REDIS, jsonFromNote);
                 redis.expire(KEY_NAME_REDIS, TIME_TO_LIVE);
             }
+        }
+    }
+
+    //JSON
+    public static Note noteFromJson(int id) {
+        try (Jedis redis = jedisPool.getResource()) {
+            String noteId = String.valueOf(id);
+            String jsonFromNote = redis.get(noteId);
+            return jsonObjectMapper.fromJson(jsonFromNote, Note.class);
+        }
+    }
+
+    //Other
+    public static boolean isExist(int id) {
+        String noteId = String.valueOf(id);
+        try (Jedis redis = jedisPool.getResource()) {
+            return redis.exists(noteId);
         }
     }
 
