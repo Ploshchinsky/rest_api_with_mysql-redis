@@ -7,16 +7,12 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.json.DefaultGsonObjectMapper;
 import redis.clients.jedis.json.JsonObjectMapper;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class RedisController {
-    @Value("${redis.url}")
-    private static String redisUrl;
-    @Value("${redis.port}")
-    private static int redisPort;
+    private static String redisHost = "localhost";
+    private static int redisPort = 6379;
     private static final String KEY_NAME_REDIS = "List";
     private static final int TIME_TO_LIVE = 300;
-    private static JedisPool jedisPool = new JedisPool(redisUrl, redisPort);
+    private static JedisPool jedisPool = new JedisPool(redisHost, redisPort);
     private static JsonObjectMapper jsonObjectMapper = new DefaultGsonObjectMapper();
 
     public static void saveInCache(Note note) {
@@ -30,4 +26,6 @@ public class RedisController {
             }
         }
     }
+
+
 }
