@@ -1,6 +1,7 @@
 package ploton.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +15,7 @@ import ploton.main.model.NoteRepository;
 @RequestMapping("/notes")
 public class NoteController {
     @Autowired
-    private static NoteRepository noteRepository;
+    private NoteRepository noteRepository;
 
     @GetMapping("")
     @ResponseBody
@@ -27,6 +28,6 @@ public class NoteController {
     public ResponseEntity<Note> save(Note note) {
         noteRepository.save(note);
         RedisController.saveInCache(note);
-        return ResponseEntity.ok(note);
+        return new ResponseEntity(note, HttpStatus.CREATED);
     }
 }
