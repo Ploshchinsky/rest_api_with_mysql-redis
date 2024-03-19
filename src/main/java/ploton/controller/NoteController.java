@@ -25,6 +25,8 @@ public class NoteController {
     //ADD
     @PostMapping("/")
     public ResponseEntity<Note> save(Note note) {
-        return ResponseEntity.ok(noteRepository.save(note));
+        noteRepository.save(note);
+        RedisController.saveInCache(note);
+        return ResponseEntity.ok(note);
     }
 }
