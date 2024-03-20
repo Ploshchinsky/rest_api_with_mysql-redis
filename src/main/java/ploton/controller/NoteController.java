@@ -7,14 +7,19 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import ploton.main.model.Note;
 import ploton.main.model.NoteRepository;
+import ploton.service.RedisCacheRunnable;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 @Controller
 @RequestMapping("/notes")
 public class NoteController {
     @Autowired
     private NoteRepository noteRepository;
+    private Executor executor = Executors.newFixedThreadPool(10);
 
     @GetMapping("")
     @ResponseBody
@@ -44,5 +49,21 @@ public class NoteController {
             return ResponseEntity.ok(note.get());
         }
         return ResponseEntity.notFound().build();
+    }
+
+    //Read All
+    @GetMapping("/")
+    public ResponseEntity<List<Note>> list() {
+        List<Note> noteList;
+        if (RedisController.listExist()) {
+            noteList = RedisController.getList();
+            return ResponseEntity.ok(noteList);
+        }
+        noteList = (List<Note>) noteRepository.findAll();
+        //Created runnable class
+        RedisCacheRunnable redisCacheRunnable = new RedisCacheRunnable(noteList);
+        //Start dedicated thread for cache saving
+        executor.execute(redisCacheRunnable);
+        return ResponseEntity.ok(noteList);
     }
 }
