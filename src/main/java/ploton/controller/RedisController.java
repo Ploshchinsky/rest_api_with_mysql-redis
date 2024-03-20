@@ -50,6 +50,7 @@ public class RedisController {
             return jsonObjectMapper.fromJson(jsonFromNote, Note.class);
         }
     }
+
     public static List<Note> getList() {
         try (Jedis redis = jedisPool.getResource()) {
             Map<String, String> jsonNoteMap = new HashMap<>(redis.hgetAll(KEY_NAME_REDIS));
@@ -71,7 +72,15 @@ public class RedisController {
         }
     }
 
-    //JSON
+    //Delete by ID
+    public static boolean delete(int id) {
+        try (Jedis redis = jedisPool.getResource()) {
+            String noteId = String.valueOf(id);
+            redis.del(noteId);
+            redis.hdel(KEY_NAME_REDIS, noteId);
+            return true;
+        }
+    }
 
     //Other
     public static boolean isExist(int id) {
@@ -97,5 +106,4 @@ public class RedisController {
         }
         return -1;
     }
-
 }
