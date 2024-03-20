@@ -45,7 +45,11 @@ public class NoteController {
         }
         if (noteRepository.existsById(id)) {
             Optional<Note> note = noteRepository.findById(id);
-            RedisController.saveInCache(note.get());
+
+            //Created runnable class and execute inside dedicated thread
+            RedisCacheRunnable redisCacheRunnable = new RedisCacheRunnable(note.get());
+            executor.execute(redisCacheRunnable);
+
             return ResponseEntity.ok(note.get());
         }
         return ResponseEntity.notFound().build();
@@ -60,10 +64,12 @@ public class NoteController {
             return ResponseEntity.ok(noteList);
         }
         noteList = (List<Note>) noteRepository.findAll();
-        //Created runnable class
+
+        //Created runnable class and execute inside dedicated thread
         RedisCacheRunnable redisCacheRunnable = new RedisCacheRunnable(noteList);
-        //Start dedicated thread for cache saving
         executor.execute(redisCacheRunnable);
+
         return ResponseEntity.ok(noteList);
     }
+
 }
