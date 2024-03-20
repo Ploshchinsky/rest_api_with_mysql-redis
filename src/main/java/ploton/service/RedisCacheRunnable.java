@@ -11,8 +11,8 @@ import java.util.List;
 
 public class RedisCacheRunnable implements Runnable {
     private Logger logger = LoggerFactory.getLogger(RedisCacheRunnable.class);
-    private List<Note> noteList;
-    private Note note;
+    private List<Note> noteList = new ArrayList<>();
+    private Note note = new Note();
 
     public RedisCacheRunnable(List<Note> noteList) {
         this.noteList = new ArrayList<>(noteList);
@@ -27,10 +27,10 @@ public class RedisCacheRunnable implements Runnable {
         logger.info("Runnable[RedisCache]: is started!");
         if (note == null) {
             logger.info("Runnable[RedisCache]: for Note's List");
-            RedisController.saveInCache(this.noteList);
+            RedisController.saveInCache(noteList);
         } else {
             logger.info("Runnable[RedisCache]: for single Note");
-            RedisController.saveInCache(this.note);
+            RedisController.saveInCache(note);
         }
         logger.info("Runnable[RedisCache]: is finished - List[" + noteList.size() + "] has been save");
     }
