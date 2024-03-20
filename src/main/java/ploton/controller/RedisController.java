@@ -6,8 +6,10 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.json.DefaultGsonObjectMapper;
 import redis.clients.jedis.json.JsonObjectMapper;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RedisController {
     private static String redisHost = "localhost";
@@ -22,45 +24,54 @@ public class RedisController {
         try (Jedis redis = jedisPool.getResource()) {
             String jsonFromNote = jsonObjectMapper.toJson(note);
             String noteId = String.valueOf(note.getId());
-            //Redis Set
+            //Redis Set \ Update
             redis.setex(noteId, TIME_TO_LIVE, jsonFromNote);
             //Redis List Update
-            redis.rpush(KEY_NAME_REDIS, jsonFromNote);
-            redis.expire(KEY_NAME_REDIS, TIME_TO_LIVE);
-
+            update(note);
         }
     }
 
     public static void saveInCache(List<Note> noteList) {
         try (Jedis redis = jedisPool.getResource()) {
             for (Note note : noteList) {
+                String noteId = String.valueOf(note.getId());
                 String jsonFromNote = jsonObjectMapper.toJson(note);
-                redis.rpush(KEY_NAME_REDIS, jsonFromNote);
+                redis.hset(KEY_NAME_REDIS, noteId, jsonFromNote);
             }
             redis.expire(KEY_NAME_REDIS, TIME_TO_LIVE);
         }
     }
 
     //Read
-    public static List<Note> getList() {
-        try (Jedis redis = jedisPool.getResource()) {
-            List<String> noteListJson = redis.lrange(KEY_NAME_REDIS, 0, -1);
-            List<Note> noteList = new ArrayList<>();
-            for (String s : noteListJson) {
-                noteList.add(jsonObjectMapper.fromJson(s, Note.class));
-            }
-            return noteList;
-        }
-    }
-
-    //JSON
-    public static Note noteFromJson(int id) {
+    public static Note getById(int id) {
         try (Jedis redis = jedisPool.getResource()) {
             String noteId = String.valueOf(id);
             String jsonFromNote = redis.get(noteId);
             return jsonObjectMapper.fromJson(jsonFromNote, Note.class);
         }
     }
+    public static List<Note> getList() {
+        try (Jedis redis = jedisPool.getResource()) {
+            Map<String, String> jsonNoteMap = new HashMap<>(redis.hgetAll(KEY_NAME_REDIS));
+            return jsonNoteMap
+                    .values()
+                    .stream()
+                    .map(string -> jsonObjectMapper.fromJson(string, Note.class))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    //Update
+    public static void update(Note note) {
+        try (Jedis redis = jedisPool.getResource()) {
+            String jsonFromNote = jsonObjectMapper.toJson(note);
+            String noteId = String.valueOf(note.getId());
+            redis.hset(KEY_NAME_REDIS, noteId, jsonFromNote);
+            redis.expire(KEY_NAME_REDIS, TIME_TO_LIVE);
+        }
+    }
+
+    //JSON
 
     //Other
     public static boolean isExist(int id) {
@@ -76,5 +87,15 @@ public class RedisController {
         }
     }
 
+    private static long getIndexFromRedisList(Jedis redis, String searchingJsonNote) {
+        List<String> jsonNotesFromRedis = redis.lrange(KEY_NAME_REDIS, 0, -1);
+        for (int i = 0; i < jsonNotesFromRedis.size(); i++) {
+            String tempJsonNote = jsonNotesFromRedis.get(i);
+            if (tempJsonNote.equals(searchingJsonNote)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
 }
