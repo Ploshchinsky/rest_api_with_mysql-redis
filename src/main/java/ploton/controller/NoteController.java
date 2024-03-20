@@ -36,7 +36,7 @@ public class NoteController {
         return new ResponseEntity(note, HttpStatus.CREATED);
     }
 
-    //Read by Id
+    //Read by ID
     @GetMapping("/{id}")
     public ResponseEntity<Note> getById(@PathVariable("id") int id) {
         //Cache searching...
@@ -74,7 +74,7 @@ public class NoteController {
         return ResponseEntity.ok(noteList);
     }
 
-    //Update by Id
+    //Update by ID
     @PutMapping("/{id}")
     public ResponseEntity<Note> update(@PathVariable("id") int id, Note note) {
         note.setId(id);
@@ -87,5 +87,14 @@ public class NoteController {
             return ResponseEntity.ok(noteRepository.save(note));
         }
         return ResponseEntity.notFound().build();
+    }
+
+    //Delete by ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Note> delete(@PathVariable("id") int id) {
+        Note tempNote = getById(id).getBody();
+        executor.execute(() -> RedisController.delete(id));
+        noteRepository.deleteById(id);
+        return ResponseEntity.ok(tempNote);
     }
 }
