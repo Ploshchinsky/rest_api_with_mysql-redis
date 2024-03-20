@@ -31,18 +31,20 @@ public class NoteController {
     @PostMapping("/")
     public ResponseEntity<Note> save(Note note) {
         noteRepository.save(note);
-        RedisController.saveInCache(note);
+        RedisCacheRunnable redisCacheRunnable = new RedisCacheRunnable(note);
+        executor.execute(redisCacheRunnable);
         return new ResponseEntity(note, HttpStatus.CREATED);
     }
 
-    //Read
+    //Read by Id
     @GetMapping("/{id}")
     public ResponseEntity<Note> getById(@PathVariable("id") int id) {
-        //Cache checking...
+        //Cache searching...
         if (RedisController.isExist(id)) {
-            Note tempNote = RedisController.noteFromJson(id);
+            Note tempNote = RedisController.getById(id);
             return ResponseEntity.ok(tempNote);
         }
+        //MySQL searching...
         if (noteRepository.existsById(id)) {
             Optional<Note> note = noteRepository.findById(id);
 
@@ -65,11 +67,25 @@ public class NoteController {
         }
         noteList = (List<Note>) noteRepository.findAll();
 
-        //Created runnable class and execute inside dedicated thread
+        //Cache update -> Created runnable class and execute inside dedicated thread
         RedisCacheRunnable redisCacheRunnable = new RedisCacheRunnable(noteList);
         executor.execute(redisCacheRunnable);
 
         return ResponseEntity.ok(noteList);
     }
 
+    //Update by Id
+    @PutMapping("/{id}")
+    public ResponseEntity<Note> update(@PathVariable("id") int id, Note note) {
+        note.setId(id);
+
+        //Cache update -> Created runnable class and execute inside dedicated thread
+        RedisCacheRunnable redisCacheRunnable = new RedisCacheRunnable(note);
+        executor.execute(redisCacheRunnable);
+
+        if (noteRepository.existsById(id)) {
+            return ResponseEntity.ok(noteRepository.save(note));
+        }
+        return ResponseEntity.notFound().build();
+    }
 }
