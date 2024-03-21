@@ -1,12 +1,11 @@
-package ploton.service;
+package ploton.main.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ploton.controller.RedisController;
+import ploton.main.controller.RedisController;
 import ploton.main.model.Note;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class RedisCacheRunnable implements Runnable {
