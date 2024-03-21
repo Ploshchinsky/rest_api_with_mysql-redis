@@ -1,4 +1,4 @@
-package ploton.controller;
+package ploton.main.controller;
 
 import ploton.main.model.Note;
 import redis.clients.jedis.Jedis;
