@@ -5,6 +5,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.util.Objects;
+
 @Entity
 public class Note {
     @Id
@@ -44,5 +46,18 @@ public class Note {
 
     public void setCompleted(boolean completed) {
         isCompleted = completed;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Note note = (Note) o;
+        return id == note.id && isCompleted == note.isCompleted && Objects.equals(head, note.head) && Objects.equals(content, note.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, head, content, isCompleted);
     }
 }
