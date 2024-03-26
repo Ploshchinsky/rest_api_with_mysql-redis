@@ -8,7 +8,8 @@ import jakarta.persistence.Id;
 import java.util.Objects;
 
 @Entity
-public class Note {
+public class Note
+        implements Comparable<Note> {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
@@ -59,5 +60,11 @@ public class Note {
     @Override
     public int hashCode() {
         return Objects.hash(id, head, content, isCompleted);
+    }
+
+    @Override
+    public int compareTo(Note anotherNote) {
+        Integer firstNoteId = getId();
+        return firstNoteId.compareTo(anotherNote.id);
     }
 }
